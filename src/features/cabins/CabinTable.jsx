@@ -1,4 +1,6 @@
 import styled from "styled-components";
+import Spinner from "../../ui/Spinner";
+import CabinRow from "./CabinRow";
 
 const Table = styled.div`
   border: 1px solid var(--color-grey-200);
@@ -23,3 +25,29 @@ const TableHeader = styled.header`
   color: var(--color-grey-600);
   padding: 1.6rem 2.4rem;
 `;
+
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getCabins } from "../../services/cabinsService";
+import useCabine from "./useCabin";
+
+export default function CabinTable() {
+  const { isLoading, cabins, error } = useCabine();
+  if (isLoading) return <Spinner />;
+
+  return (
+    <Table role="table">
+      <TableHeader role="row">
+        <div></div>
+        <div>Cabin</div>
+        <div>Capacity</div>
+        <div>Price</div>
+        <div>Discount</div>
+        <div>Action</div>
+      </TableHeader>
+      {cabins.map((cabin) => (
+        <CabinRow key={cabin.id} cabin={cabin} />
+      ))}
+    </Table>
+  );
+}
