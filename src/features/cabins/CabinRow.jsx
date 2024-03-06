@@ -9,6 +9,9 @@ import { IoCreateOutline } from "react-icons/io5";
 import { MdDeleteOutline } from "react-icons/md";
 import { IoDuplicateOutline } from "react-icons/io5";
 import useCreateCabin from "./useCreateCabin";
+import Modal from "../../ui/Modal";
+import ConfirmDelete from "../../ui/ConfirmDelete";
+import Table from "../../ui/Table";
 
 const TableRow = styled.div`
   display: grid;
@@ -50,7 +53,6 @@ const Discount = styled.div`
 `;
 
 export default function CabinRow({ cabin }) {
-  const [showForm, setShowForm] = useState(false);
   const { id, name, description, maxCapacity, regularPrice, discount, image } =
     cabin;
   const { addCabin } = useCreateCabin();
@@ -58,7 +60,7 @@ export default function CabinRow({ cabin }) {
     addCabin({ ...cabin, name: "Copy of - " + cabin.name });
   };
 
-  const { isLoading, mutate } = useMutation({
+  const { isLoading: isDeleting, mutate: deleteRow } = useMutation({
     mutationFn: (id) => deleteCabin(id),
     onSuccess: () => {
       toast.success("Cabin deleted");
@@ -73,30 +75,47 @@ export default function CabinRow({ cabin }) {
 
   const queryClient = useQueryClient();
   return (
-    <>
-      <TableRow role="row">
-        <Img src={image} alt={name} role="img" />
-        <Cabin>{name}</Cabin>
-        <div>{maxCapacity}</div>
-        <Price>{formatCurrency(regularPrice)}</Price>
-        {discount ? (
-          <Discount>{formatCurrency(discount)}</Discount>
-        ) : (
-          <span>&mdash;</span>
-        )}
-        <div>
-          <button onClick={() => setShowForm((sf) => !sf)}>
-            <IoCreateOutline />
-          </button>
-          <button onClick={() => mutate(id)} disabled={isLoading}>
-            <MdDeleteOutline />
-          </button>
-          <button onClick={() => copyCabin()}>
-            <IoDuplicateOutline />
-          </button>
-        </div>
-      </TableRow>
-      {showForm && <CreateCabinForm cabin={cabin} />}
-    </>
+    <Table.Row>
+      <Img src={image} alt={name} role="img" />
+      <Cabin>{name}</Cabin>
+      <div>{maxCapacity}</div>
+      <Price>{formatCurrency(regularPrice)}</Price>
+      {discount ? (
+        <Discount>{formatCurrency(discount)}</Discount>
+      ) : (
+        <span>&mdash;</span>
+      )}
+      <div>
+        <Modal>
+          <Modal.Open openWindowName="editCabin">
+            <button>
+              <IoCreateOutline />
+            </button>
+          </Modal.Open>
+          <Modal.Window name="editCabin">
+            <CreateCabinForm cabin={cabin} />
+          </Modal.Window>
+        </Modal>
+
+        <Modal>
+          <Modal.Open openWindowName="deleteCabin">
+            <button disabled={isDeleting}>
+              <MdDeleteOutline />
+            </button>
+          </Modal.Open>
+          <Modal.Window name="deleteCabin">
+            <ConfirmDelete
+              resourceName="cabin"
+              onConfirm={() => deleteRow(id)}
+              disabled={isDeleting}
+            />
+          </Modal.Window>
+        </Modal>
+
+        <button onClick={() => copyCabin()}>
+          <IoDuplicateOutline />
+        </button>
+      </div>
+    </Table.Row>
   );
 }

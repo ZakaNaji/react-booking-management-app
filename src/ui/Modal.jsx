@@ -1,4 +1,15 @@
+import {
+  cloneElement,
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import styled from "styled-components";
+import { FaRegWindowClose } from "react-icons/fa";
+import { createPortal } from "react-dom";
+import useClickOutside from "../hooks/useClickOutside";
 
 const StyledModal = styled.div`
   position: fixed;
@@ -48,3 +59,40 @@ const Button = styled.button`
     color: var(--color-grey-500);
   }
 `;
+
+const ModalContext = createContext();
+
+export default function Modal({ children }) {
+  const [openWindowName, setOpenWindowName] = useState("");
+  const openWindow = setOpenWindowName;
+  const closeWindow = () => setOpenWindowName("");
+
+  return (
+    <ModalContext.Provider value={{ openWindow, closeWindow, openWindowName }}>
+      {children}
+    </ModalContext.Provider>
+  );
+}
+
+Modal.Open = function Open({ openWindowName, children }) {
+  const { openWindow } = useContext(ModalContext);
+  return cloneElement(children, { onClick: () => openWindow(openWindowName) });
+};
+Modal.Window = function Window({ name, children }) {
+  const { openWindowName, closeWindow } = useContext(ModalContext);
+
+  const ref = useClickOutside(closeWindow);
+
+  if (openWindowName !== name) return null;
+  return createPortal(
+    <Overlay>
+      <StyledModal ref={ref}>
+        <Button onClick={() => closeWindow()}>
+          <FaRegWindowClose />
+        </Button>
+        <div>{cloneElement(children, { onCloseModal: closeWindow })}</div>
+      </StyledModal>
+    </Overlay>,
+    document.body
+  );
+};
