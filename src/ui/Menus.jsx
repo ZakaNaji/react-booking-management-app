@@ -1,4 +1,7 @@
+import { createContext, useContext, useState } from "react";
+import { CiMenuKebab } from "react-icons/ci";
 import styled from "styled-components";
+import useClickOutside from "../hooks/useClickOutside";
 
 const StyledMenu = styled.div`
   display: flex;
@@ -60,3 +63,62 @@ const StyledButton = styled.button`
     transition: all 0.3s;
   }
 `;
+const MenusContext = createContext();
+
+export default function Menus({ children }) {
+  const [openId, setOpenId] = useState("");
+  const [position, setPosition] = useState(null);
+  const closeMenu = () => setOpenId("");
+  const openMenu = (id) => setOpenId(id);
+  return (
+    <MenusContext.Provider
+      value={{ openId, closeMenu, openMenu, position, setPosition }}
+    >
+      {children}
+    </MenusContext.Provider>
+  );
+}
+Menus.Menu = StyledMenu;
+
+Menus.Toggle = function Toggle({ id }) {
+  const { openId, openMenu, closeMenu, setPosition } = useContext(MenusContext);
+  const handleClick = (e) => {
+    const rec = e.target.closest("button").getBoundingClientRect();
+    setPosition({
+      x: window.innerWidth - rec.width - rec.x,
+      y: rec.y + rec.height + 8,
+    });
+    openId === "" || openId !== id ? openMenu(id) : closeMenu();
+  };
+  return (
+    <StyledToggle onClick={handleClick}>
+      <CiMenuKebab />
+    </StyledToggle>
+  );
+};
+
+Menus.List = function List({ children, id }) {
+  const { openId, position, closeMenu } = useContext(MenusContext);
+  const ref = useClickOutside(closeMenu);
+  if (openId !== id) return null;
+  return (
+    <StyledList ref={ref} position={position}>
+      {children}
+    </StyledList>
+  );
+};
+
+Menus.Button = function Button({ children, onClick, icon }) {
+  const { closeMenu } = useContext(MenusContext);
+  const handleClick = (e) => {
+    onClick?.();
+    closeMenu();
+  };
+  return (
+    <li>
+      <StyledButton onClick={handleClick}>
+        {icon} <span>{children}</span>
+      </StyledButton>
+    </li>
+  );
+};

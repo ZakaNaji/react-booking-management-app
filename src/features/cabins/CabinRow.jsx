@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { formatCurrency } from "../../utils/helpers";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteCabin } from "../../services/cabinsService";
+import { deleteCabin, editCabin } from "../../services/cabinsService";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import CreateCabinForm from "./CreateCabinForm";
@@ -12,6 +12,7 @@ import useCreateCabin from "./useCreateCabin";
 import Modal from "../../ui/Modal";
 import ConfirmDelete from "../../ui/ConfirmDelete";
 import Table from "../../ui/Table";
+import Menus from "../../ui/Menus";
 
 const TableRow = styled.div`
   display: grid;
@@ -57,7 +58,14 @@ export default function CabinRow({ cabin }) {
     cabin;
   const { addCabin } = useCreateCabin();
   const copyCabin = () => {
-    addCabin({ ...cabin, name: "Copy of - " + cabin.name });
+    addCabin({
+      description,
+      maxCapacity,
+      regularPrice,
+      discount,
+      image,
+      name: "Copy of - " + cabin.name,
+    });
   };
 
   const { isLoading: isDeleting, mutate: deleteRow } = useMutation({
@@ -87,34 +95,46 @@ export default function CabinRow({ cabin }) {
       )}
       <div>
         <Modal>
-          <Modal.Open openWindowName="editCabin">
-            <button>
-              <IoCreateOutline />
-            </button>
-          </Modal.Open>
-          <Modal.Window name="editCabin">
-            <CreateCabinForm cabin={cabin} />
-          </Modal.Window>
-        </Modal>
+          <Menus.Menu>
+            <Menus.Toggle id={id} />
+            <Menus.List id={id}>
+              <Modal.Open openWindowName="editCabin">
+                <Menus.Button
+                  onClick={() => editCabin()}
+                  icon={<IoCreateOutline />}
+                >
+                  Edit
+                </Menus.Button>
+              </Modal.Open>
 
-        <Modal>
-          <Modal.Open openWindowName="deleteCabin">
-            <button disabled={isDeleting}>
-              <MdDeleteOutline />
-            </button>
-          </Modal.Open>
-          <Modal.Window name="deleteCabin">
-            <ConfirmDelete
-              resourceName="cabin"
-              onConfirm={() => deleteRow(id)}
-              disabled={isDeleting}
-            />
-          </Modal.Window>
-        </Modal>
+              <Modal.Open openWindowName="deleteCabin">
+                <Menus.Button
+                  onClick={() => deleteRow(id)}
+                  icon={<MdDeleteOutline />}
+                >
+                  Delete
+                </Menus.Button>
+              </Modal.Open>
 
-        <button onClick={() => copyCabin()}>
-          <IoDuplicateOutline />
-        </button>
+              <Menus.Button
+                onClick={() => copyCabin()}
+                icon={<IoDuplicateOutline />}
+              >
+                Copy
+              </Menus.Button>
+            </Menus.List>
+            <Modal.Window name="editCabin">
+              <CreateCabinForm cabin={cabin} />
+            </Modal.Window>
+            <Modal.Window name="deleteCabin">
+              <ConfirmDelete
+                resourceName="cabin"
+                onConfirm={() => deleteRow(id)}
+                disabled={isDeleting}
+              />
+            </Modal.Window>
+          </Menus.Menu>
+        </Modal>
       </div>
     </Table.Row>
   );
